@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Novel Site</title>
+  <style>
+    body { font-family: Arial; margin:0; padding:0; background:#f4f4f4;}
+    header { background:#fff; padding:10px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+    header h1 { margin:0; font-size:20px;}
+    header button { font-size:18px; padding:5px 10px;}
+    #loginSection, #novelSection { padding:10px;}
+    .hidden { display:none;}
+    .novelCard { background:#fff; margin:10px 0; padding:10px; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+    .novelCard img { max-width:100%; border-radius:5px;}
+    .commentBox { margin-top:5px;}
+    input, textarea { width:100%; margin:3px 0; padding:5px;}
+    button { margin:3px 0; padding:5px;}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>MiniNovel</h1>
+  <button id="menuBtn">☰</button>
+</header>
+
+<section id="loginSection">
+  <h2>Admin Login</h2>
+  <input type="text" id="adminName" placeholder="Adınızı daxil edin">
+  <button id="loginBtn">Daxil ol</button>
+</section>
+
+<section id="novelSection" class="hidden">
+  <h2>Novellər</h2>
+  <input type="text" id="searchInput" placeholder="Axtar...">
+  <div id="novelList"></div>
+  <hr>
+  <h3>Yeni Novel əlavə et (Admin)</h3>
+  <input type="text" id="novelTitle" placeholder="Novel adı">
+  <textarea id="novelContent" placeholder="Hekayə məzmunu"></textarea>
+  <input type="text" id="novelImage" placeholder="Şəkil URL">
+  <button id="addNovelBtn">Əlavə et</button>
+  <hr>
+  <button id="logoutBtn">Çıxış</button>
+</section>
+
+<script>
+  // Demo admin
+  const adminUsername = "admin";
+
+  // Demo novellər
+  let novels = [
+    {id:1, title:"Sehirli Dünya", content:"Bu bir sehirli hekayədir...", image:"https://via.placeholder.com/300x150", comments:[]},
+    {id:2, title:"Qəhrəman Macərası", content:"Qəhrəmanın macərası başlayır...", image:"https://via.placeholder.com/300x150", comments:[]}
+  ];
+
+  let currentUser = null;
+
+  const loginSection = document.getElementById("loginSection");
+  const novelSection = document.getElementById("novelSection");
+  const adminName = document.getElementById("adminName");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const novelList = document.getElementById("novelList");
+  const addNovelBtn = document.getElementById("addNovelBtn");
+  const novelTitle = document.getElementById("novelTitle");
+  const novelContent = document.getElementById("novelContent");
+  const novelImage = document.getElementById("novelImage");
+  const searchInput = document.getElementById("searchInput");
+
+  // Login
+  loginBtn.addEventListener("click", ()=>{
+    if(adminName.value.trim() === adminUsername){
+      currentUser = {name:adminName.value, isAdmin:true};
+      loginSection.classList.add("hidden");
+      novelSection.classList.remove("hidden");
+      renderNovels();
+    } else {
+      alert("Yanlış ad, admin olmalısınız!");
+    }
+  });
+
+  // Logout
+  logoutBtn.addEventListener("click", ()=>{
+    currentUser = null;
+    loginSection.classList.remove("hidden");
+    novelSection.classList.add("hidden");
+  });
+
+  // Render novellər
+  function renderNovels(){
+    const query = searchInput.value.toLowerCase();
+    novelList.innerHTML="";
+    novels.filter(n=>n.title.toLowerCase().includes(query)).forEach(n=>{
+      let div = document.createElement("div");
+      div.className="novelCard";
+      div.innerHTML=`
+        <h3>${n.title}</h3>
+        ${n.image?`<img src="${n.image}">`:""}
+        <p>${n.content}</p>
+        <div class="commentBox">
+          <input type="text" placeholder="Şərh yazın..." id="commentInput${n.id}">
+          <button onclick="addComment(${n.id})">Əlavə et</button>
+          <ul id="commentList${n.id}"></ul>
+        </div>
+      `;
+      novelList.appendChild(div);
+      renderComments(n.id);
+    });
+  }
+
+  // Yeni novel əlavə et
+  addNovelBtn.addEventListener("click", ()=>{
+    if(!novelTitle.value || !novelContent.value) return;
+    novels.push({
+      id:novels.length+1,
+      title:novelTitle.value,
+      content:novelContent.value,
+      image:novelImage.value,
+      comments:[]
+    });
+    novelTitle.value=""; novelContent.value=""; novelImage.value="";
+    renderNovels();
+  });
+
+  // Comment əlavə et
+  function addComment(novelId){
+    const input = document.getElementById("commentInput"+novelId);
+    if(!input.value) return;
+    const novel = novels.find(n=>n.id===novelId);
+    novel.comments.push({user:currentUser.name, text:input.value});
+    input.value="";
+    renderComments(novelId);
+  }
+
+  function renderComments(novelId){
+    const novel = novels.find(n=>n.id===novelId);
+    const ul = document.getElementById("commentList"+novelId);
+    ul.innerHTML="";
+    novel.comments.forEach(c=>{
+      const li = document.createElement("li");
+      li.textContent=`${c.user}: ${c.text}`;
+      ul.appendChild(li);
+    });
+  }
+
+  // Axtarış
+  searchInput.addEventListener("input", renderNovels);
+
+</script>
+</body>
+  </html>
